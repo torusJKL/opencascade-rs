@@ -9,7 +9,7 @@ use crate::{
 use cxx::UniquePtr;
 use glam::{dvec2, dvec3, DVec3};
 use opencascade_sys as ffi;
-use std::path::Path;
+use std::{path::Path, pin::Pin};
 
 pub struct Shape {
     pub(crate) inner: UniquePtr<ffi::topo_ds::TopoDS_Shape>,
@@ -760,6 +760,51 @@ impl Shape {
         }
 
         results
+    }
+
+    /// Create a transformed copy of this shape using a `gp_Trsf` configured by `configure`.
+    fn with_transform(&self, configure: impl FnOnce(Pin<&mut ffi::gp::gp_Trsf>)) -> Self {
+        let mut transform = ffi::gp::new_transform();
+        configure(transform.pin_mut());
+        let mut brep =
+            ffi::b_rep_builder_api::BRepBuilderAPI_Transform_new(&self.inner, &transform, true);
+        Self::from_shape(brep.pin_mut().Shape())
+    }
+
+    /// Create a translated copy of this shape.
+    #[must_use]
+    pub fn translated(&self, offset: DVec3) -> Self {
+        self.with_transform(|trsf| {
+            let translation_vec = make_vec(offset);
+            trsf.set_translation_vec(&translation_vec);
+        })
+    }
+
+    /// Create a rotated copy of this shape about an axis through the origin.
+    #[must_use]
+    pub fn rotated(&self, axis: DVec3, angle: f64) -> Self {
+        self.with_transform(|trsf| {
+            let axis_1 = make_axis_1(DVec3::ZERO, axis);
+            trsf.SetRotation(&axis_1, angle);
+        })
+    }
+
+    /// Create a scaled copy of this shape about a point.
+    #[must_use]
+    pub fn scaled(&self, point: DVec3, factor: f64) -> Self {
+        self.with_transform(|trsf| {
+            let pnt = make_point(point);
+            trsf.SetScale(&pnt, factor);
+        })
+    }
+
+    /// Create a mirrored copy of this shape about an axis.
+    #[must_use]
+    pub fn mirrored(&self, origin: DVec3, dir: DVec3) -> Self {
+        self.with_transform(|trsf| {
+            let axis_1 = make_axis_1(origin, dir);
+            trsf.set_mirror_axis(&axis_1);
+        })
     }
 
     #[must_use]
