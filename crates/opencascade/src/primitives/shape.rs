@@ -275,6 +275,12 @@ impl TorusBuilder {
 }
 
 impl Shape {
+    impl_downcast!(Wire);
+
+    impl_downcast!(Face);
+
+    impl_downcast!(Solid);
+
     pub(crate) fn from_shape(shape: &ffi::topo_ds::TopoDS_Shape) -> Self {
         let inner = ffi::topo_ds::TopoDS_Shape_to_owned(shape);
 
@@ -852,5 +858,81 @@ impl ChamferMaker {
 
     pub fn build(mut self) -> Shape {
         Shape::from_shape(self.inner.pin_mut().Shape())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn face_shape() -> Shape {
+        Shape::from(&Face::from_wire(&Wire::rect(10.0, 10.0)))
+    }
+
+    fn wire_shape() -> Shape {
+        Shape::from(&Wire::rect(10.0, 10.0))
+    }
+
+    fn solid_shape() -> Shape {
+        Shape::box_centered(10.0, 10.0, 10.0)
+    }
+
+    #[test]
+    fn test_as_wire() {
+        let shape = wire_shape();
+        assert!(shape.as_wire().is_some());
+        assert!(shape.as_face().is_none());
+        assert!(shape.as_solid().is_none());
+    }
+
+    #[test]
+    fn test_as_face() {
+        let shape = face_shape();
+        assert!(shape.as_face().is_some());
+        assert!(shape.as_wire().is_none());
+        assert!(shape.as_solid().is_none());
+    }
+
+    #[test]
+    fn test_as_solid() {
+        let shape = solid_shape();
+        assert!(shape.as_solid().is_some());
+        assert!(shape.as_wire().is_none());
+        assert!(shape.as_face().is_none());
+    }
+
+    #[test]
+    fn test_empty_shape() {
+        let shape = Shape::empty();
+        assert!(shape.as_wire().is_none());
+        assert!(shape.as_face().is_none());
+        assert!(shape.as_solid().is_none());
+    }
+
+    #[test]
+    fn test_expect_wire() {
+        let shape = wire_shape();
+        let _wire = shape.expect_wire();
+    }
+
+    #[test]
+    #[should_panic(expected = "expected Wire, got Face")]
+    fn test_expect_wire_panics_on_face() {
+        let shape = face_shape();
+        let _wire = shape.expect_wire();
+    }
+
+    #[test]
+    #[should_panic(expected = "expected Face, got Solid")]
+    fn test_expect_face_panics_on_solid() {
+        let shape = solid_shape();
+        let _face = shape.expect_face();
+    }
+
+    #[test]
+    #[should_panic(expected = "expected Solid, got Face")]
+    fn test_expect_solid_panics_on_face() {
+        let shape = face_shape();
+        let _solid = shape.expect_solid();
     }
 }
