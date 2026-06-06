@@ -275,6 +275,51 @@ impl TorusBuilder {
 }
 
 impl Shape {
+    #[must_use]
+    pub fn as_wire(&self) -> Option<Wire> {
+        if self.shape_type() == ShapeType::Wire {
+            let inner = ffi::topo_ds::TopoDS::Wire(&self.inner);
+            Some(Wire::from_wire(inner))
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub fn expect_wire(&self) -> Wire {
+        self.as_wire().unwrap_or_else(|| panic!("expected Wire, got {:?}", self.shape_type()))
+    }
+
+    #[must_use]
+    pub fn as_face(&self) -> Option<Face> {
+        if self.shape_type() == ShapeType::Face {
+            let inner = ffi::topo_ds::TopoDS::Face(&self.inner);
+            Some(Face::from_face(inner))
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub fn expect_face(&self) -> Face {
+        self.as_face().unwrap_or_else(|| panic!("expected Face, got {:?}", self.shape_type()))
+    }
+
+    #[must_use]
+    pub fn as_solid(&self) -> Option<Solid> {
+        if self.shape_type() == ShapeType::Solid {
+            let inner = ffi::topo_ds::TopoDS::Solid(&self.inner);
+            Some(Solid::from_solid(inner))
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub fn expect_solid(&self) -> Solid {
+        self.as_solid().unwrap_or_else(|| panic!("expected Solid, got {:?}", self.shape_type()))
+    }
+
     pub(crate) fn from_shape(shape: &ffi::topo_ds::TopoDS_Shape) -> Self {
         let inner = ffi::topo_ds::TopoDS_Shape_to_owned(shape);
 
@@ -897,5 +942,81 @@ impl ChamferMaker {
 
     pub fn build(mut self) -> Shape {
         Shape::from_shape(self.inner.pin_mut().Shape())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn face_shape() -> Shape {
+        Shape::from(&Face::from_wire(&Wire::rect(10.0, 10.0)))
+    }
+
+    fn wire_shape() -> Shape {
+        Shape::from(&Wire::rect(10.0, 10.0))
+    }
+
+    fn solid_shape() -> Shape {
+        Shape::box_centered(10.0, 10.0, 10.0)
+    }
+
+    #[test]
+    fn test_as_wire() {
+        let shape = wire_shape();
+        assert!(shape.as_wire().is_some());
+        assert!(shape.as_face().is_none());
+        assert!(shape.as_solid().is_none());
+    }
+
+    #[test]
+    fn test_as_face() {
+        let shape = face_shape();
+        assert!(shape.as_face().is_some());
+        assert!(shape.as_wire().is_none());
+        assert!(shape.as_solid().is_none());
+    }
+
+    #[test]
+    fn test_as_solid() {
+        let shape = solid_shape();
+        assert!(shape.as_solid().is_some());
+        assert!(shape.as_wire().is_none());
+        assert!(shape.as_face().is_none());
+    }
+
+    #[test]
+    fn test_empty_shape() {
+        let shape = Shape::empty();
+        assert!(shape.as_wire().is_none());
+        assert!(shape.as_face().is_none());
+        assert!(shape.as_solid().is_none());
+    }
+
+    #[test]
+    fn test_expect_wire() {
+        let shape = wire_shape();
+        let _wire = shape.expect_wire();
+    }
+
+    #[test]
+    #[should_panic(expected = "expected Wire, got Face")]
+    fn test_expect_wire_panics_on_face() {
+        let shape = face_shape();
+        let _wire = shape.expect_wire();
+    }
+
+    #[test]
+    #[should_panic(expected = "expected Face, got Solid")]
+    fn test_expect_face_panics_on_solid() {
+        let shape = solid_shape();
+        let _face = shape.expect_face();
+    }
+
+    #[test]
+    #[should_panic(expected = "expected Solid, got Face")]
+    fn test_expect_solid_panics_on_face() {
+        let shape = face_shape();
+        let _solid = shape.expect_solid();
     }
 }
