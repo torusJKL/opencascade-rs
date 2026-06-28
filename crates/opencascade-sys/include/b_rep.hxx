@@ -7,6 +7,7 @@
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <TopoDS_Wire.hxx>
 #include <bindings_common.hxx>
 #include <gp_Pnt.hxx>
 
@@ -29,4 +30,8 @@ inline std::unique_ptr<Handle_Poly_Triangulation> BRep_Tool_Triangulation(const 
                                                                           TopLoc_Location &location) {
   return std::unique_ptr<Handle_Poly_Triangulation>(
       new opencascade::handle<Poly_Triangulation>(BRep_Tool::Triangulation(face, location)));
+}
+
+inline bool BRep_Tool_IsClosed(const TopoDS_Wire &wire) {
+  return BRep_Tool::IsClosed(wire);
 }
