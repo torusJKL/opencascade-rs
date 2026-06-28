@@ -1,10 +1,12 @@
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BezierSurface.hxx>
+#include <Geom_Circle.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <gp_Circ.hxx>
 #include <bindings_common.hxx>
 
 inline std::unique_ptr<Handle_Geom_CylindricalSurface> Geom_CylindricalSurface_new(const gp_Ax3 &axis, double radius) {
@@ -43,3 +45,13 @@ inline std::unique_ptr<gp_Pnt> HandleGeomCurve_Value(const Handle_Geom_Curve &cu
 }
 
 inline const Handle_Standard_Type &DynamicType(const Handle_Geom_Surface &surface) { return surface->DynamicType(); }
+
+inline std::unique_ptr<Handle_Geom_Circle>
+new_HandleGeomCircle_from_HandleGeomCurve(const Handle_Geom_Curve &curve) {
+  Handle_Geom_Circle circle_handle = opencascade::handle<Geom_Circle>::DownCast(curve);
+  return std::unique_ptr<Handle_Geom_Circle>(new opencascade::handle<Geom_Circle>(circle_handle));
+}
+
+inline std::unique_ptr<gp_Circ> HandleGeomCircle_Circ(const Handle_Geom_Circle &circle) {
+  return std::unique_ptr<gp_Circ>(new gp_Circ(circle->Circ()));
+}

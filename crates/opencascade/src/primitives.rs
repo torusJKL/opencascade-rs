@@ -25,6 +25,12 @@ pub use vertex::*;
 pub use wire::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+pub enum PositionMode {
+    Parameter,
+    Length,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ShapeType {
     /// Abstract topological data structure describes a basic entity.
     Shape,
