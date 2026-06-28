@@ -3,7 +3,8 @@ use crate::{
     law_function::law_function_from_graph,
     make_pipe_shell::make_pipe_shell_with_law_function,
     primitives::{
-        make_axis_1, make_point, make_vec, EdgeIterator, JoinType, Shape, Solid, Surface, Wire,
+        make_axis_1, make_point, make_vec, EdgeIterator, JoinType, Shape, Solid, Surface,
+        SurfaceType, Wire,
     },
     workplane::Workplane,
 };
@@ -383,6 +384,30 @@ impl Face {
         props.Mass()
     }
 
+    pub fn surface_type(&self) -> SurfaceType {
+        let surface = ffi::b_rep::BRep_Tool_Surface(&self.inner);
+        let dynamic_type = ffi::geom::DynamicType(&surface);
+        let name = ffi::standard::type_name(dynamic_type);
+
+        match name.as_str() {
+            "Geom_Plane" => SurfaceType::Plane,
+            "Geom_CylindricalSurface" => SurfaceType::Cylinder,
+            "Geom_ConicalSurface" => SurfaceType::Cone,
+            "Geom_SphericalSurface" => SurfaceType::Sphere,
+            "Geom_ToroidalSurface" => SurfaceType::Torus,
+            "Geom_BezierSurface" => SurfaceType::BezierSurface,
+            "Geom_BSplineSurface" => SurfaceType::BSplineSurface,
+            "Geom_SurfaceOfRevolution" => SurfaceType::SurfaceOfRevolution,
+            "Geom_SurfaceOfExtrusion" => SurfaceType::SurfaceOfExtrusion,
+            "Geom_OffsetSurface" => SurfaceType::OffsetSurface,
+            _ => SurfaceType::OtherSurface,
+        }
+    }
+
+    pub fn is_planar(&self) -> bool {
+        self.surface_type() == SurfaceType::Plane
+    }
+
     pub fn orientation(&self) -> FaceOrientation {
         FaceOrientation::from(self.inner.Orientation())
     }
@@ -548,6 +573,7 @@ impl From<ffi::top_abs::TopAbs_Orientation> for FaceOrientation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::shape::Shape;
 
     #[test]
     fn test_add() {
@@ -557,5 +583,38 @@ mod tests {
             "Expected surface_area() to be ~35.0, was actually {}",
             face.surface_area()
         );
+    }
+
+    #[test]
+    fn test_surface_type_plane() {
+        let face = Workplane::xy().rect(7.0, 5.0).to_face();
+        assert_eq!(face.surface_type(), SurfaceType::Plane);
+    }
+
+    #[test]
+    fn test_surface_type_cylinder() {
+        let shape = Shape::cylinder_radius_height(3.0, 10.0);
+        let has_cylinder = shape.faces().any(|f| f.surface_type() == SurfaceType::Cylinder);
+        assert!(has_cylinder, "Expected at least one cylindrical face");
+    }
+
+    #[test]
+    fn test_surface_type_sphere() {
+        let shape = Shape::sphere(5.0).build();
+        let has_sphere = shape.faces().any(|f| f.surface_type() == SurfaceType::Sphere);
+        assert!(has_sphere, "Expected at least one spherical face");
+    }
+
+    #[test]
+    fn test_is_planar() {
+        let plane_face = Workplane::xy().rect(7.0, 5.0).to_face();
+        assert!(plane_face.is_planar());
+
+        let shape = Shape::cylinder_radius_height(3.0, 10.0);
+        let cylinder_face = shape
+            .faces()
+            .find(|f| f.surface_type() == SurfaceType::Cylinder)
+            .expect("Expected a cylindrical face");
+        assert!(!cylinder_face.is_planar());
     }
 }
