@@ -384,6 +384,18 @@ impl Face {
         props.Mass()
     }
 
+    pub fn surface_axis(&self) -> Option<(DVec3, DVec3)> {
+        let handle = ffi::b_rep::BRep_Tool_Surface(&self.inner);
+        let surface = Surface { inner: handle };
+        surface.axis()
+    }
+
+    pub fn surface_radius(&self) -> Option<f64> {
+        let handle = ffi::b_rep::BRep_Tool_Surface(&self.inner);
+        let surface = Surface { inner: handle };
+        surface.radius()
+    }
+
     pub fn surface_type(&self) -> SurfaceType {
         let surface = ffi::b_rep::BRep_Tool_Surface(&self.inner);
         let dynamic_type = ffi::geom::DynamicType(&surface);
@@ -616,5 +628,46 @@ mod tests {
             .find(|f| f.surface_type() == SurfaceType::Cylinder)
             .expect("Expected a cylindrical face");
         assert!(!cylinder_face.is_planar());
+    }
+
+    #[test]
+    fn test_cylindrical_face_axis_is_z_direction() {
+        let shape = Shape::cylinder_radius_height(3.0, 10.0);
+        let cylinder_face = shape
+            .faces()
+            .find(|f| f.surface_type() == SurfaceType::Cylinder)
+            .expect("Expected a cylindrical face");
+        let axis = cylinder_face.surface_axis();
+        assert!(axis.is_some(), "Expected Some axis for cylindrical face");
+        let (_origin, direction) = axis.unwrap();
+        assert!(
+            (direction - DVec3::Z).length() < 0.0001 || (direction + DVec3::Z).length() < 0.0001,
+            "Expected Z direction, got {:?}",
+            direction
+        );
+    }
+
+    #[test]
+    fn test_planar_face_axis_returns_none() {
+        let face = Workplane::xy().rect(7.0, 5.0).to_face();
+        assert_eq!(face.surface_axis(), None);
+    }
+
+    #[test]
+    fn test_cylindrical_face_radius() {
+        let shape = Shape::cylinder_radius_height(5.0, 10.0);
+        let cylinder_face = shape
+            .faces()
+            .find(|f| f.surface_type() == SurfaceType::Cylinder)
+            .expect("Expected a cylindrical face");
+        let radius = cylinder_face.surface_radius();
+        assert!(radius.is_some(), "Expected Some radius for cylindrical face");
+        assert!((radius.unwrap() - 5.0).abs() < 0.0001, "Expected radius ~5.0, got {:?}", radius);
+    }
+
+    #[test]
+    fn test_planar_face_radius_returns_none() {
+        let face = Workplane::xy().rect(7.0, 5.0).to_face();
+        assert_eq!(face.surface_radius(), None);
     }
 }

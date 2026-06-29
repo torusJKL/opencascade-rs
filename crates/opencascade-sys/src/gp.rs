@@ -61,6 +61,8 @@ mod inner {
         type gp_Ax3;
         #[cxx_name = "construct_unique"]
         pub fn gp_Ax3_from_gp_Ax2(axis: &gp_Ax2) -> UniquePtr<gp_Ax3>;
+        pub fn Location(self: &gp_Ax3) -> &gp_Pnt;
+        pub fn Direction(self: &gp_Ax3) -> &gp_Dir;
 
         type gp_Dir2d;
         #[cxx_name = "construct_unique"]
