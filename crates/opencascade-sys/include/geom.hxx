@@ -9,9 +9,9 @@
 #include <Geom_Surface.hxx>
 #include <Geom_ToroidalSurface.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <bindings_common.hxx>
 #include <gp_Ax3.hxx>
 #include <gp_Circ.hxx>
-#include <bindings_common.hxx>
 
 inline std::unique_ptr<Handle_Geom_CylindricalSurface> Geom_CylindricalSurface_new(const gp_Ax3 &axis, double radius) {
   return std::unique_ptr<Handle_Geom_CylindricalSurface>(
@@ -50,8 +50,7 @@ inline std::unique_ptr<gp_Pnt> HandleGeomCurve_Value(const Handle_Geom_Curve &cu
 
 inline const Handle_Standard_Type &DynamicType(const Handle_Geom_Surface &surface) { return surface->DynamicType(); }
 
-inline std::unique_ptr<Handle_Geom_Circle>
-new_HandleGeomCircle_from_HandleGeomCurve(const Handle_Geom_Curve &curve) {
+inline std::unique_ptr<Handle_Geom_Circle> new_HandleGeomCircle_from_HandleGeomCurve(const Handle_Geom_Curve &curve) {
   Handle_Geom_Circle circle_handle = opencascade::handle<Geom_Circle>::DownCast(curve);
   return std::unique_ptr<Handle_Geom_Circle>(new opencascade::handle<Geom_Circle>(circle_handle));
 }
@@ -68,9 +67,7 @@ new_HandleGeomCylindricalSurface_from_HandleGeomSurface(const Handle_Geom_Surfac
   return std::unique_ptr<Handle_Geom_CylindricalSurface>(new opencascade::handle<Geom_CylindricalSurface>(handle));
 }
 
-inline double HandleGeomCylindricalSurface_Radius(const Handle_Geom_CylindricalSurface &cyl) {
-  return cyl->Radius();
-}
+inline double HandleGeomCylindricalSurface_Radius(const Handle_Geom_CylindricalSurface &cyl) { return cyl->Radius(); }
 
 inline const gp_Ax3 &HandleGeomCylindricalSurface_Position(const Handle_Geom_CylindricalSurface &cyl) {
   return cyl->Position();
@@ -84,9 +81,7 @@ new_HandleGeomSphericalSurface_from_HandleGeomSurface(const Handle_Geom_Surface 
   return std::unique_ptr<Handle_Geom_SphericalSurface>(new opencascade::handle<Geom_SphericalSurface>(handle));
 }
 
-inline double HandleGeomSphericalSurface_Radius(const Handle_Geom_SphericalSurface &sphere) {
-  return sphere->Radius();
-}
+inline double HandleGeomSphericalSurface_Radius(const Handle_Geom_SphericalSurface &sphere) { return sphere->Radius(); }
 
 inline const gp_Ax3 &HandleGeomSphericalSurface_Position(const Handle_Geom_SphericalSurface &sphere) {
   return sphere->Position();
@@ -100,13 +95,9 @@ new_HandleGeomConicalSurface_from_HandleGeomSurface(const Handle_Geom_Surface &s
   return std::unique_ptr<Handle_Geom_ConicalSurface>(new opencascade::handle<Geom_ConicalSurface>(handle));
 }
 
-inline double HandleGeomConicalSurface_RefRadius(const Handle_Geom_ConicalSurface &cone) {
-  return cone->RefRadius();
-}
+inline double HandleGeomConicalSurface_RefRadius(const Handle_Geom_ConicalSurface &cone) { return cone->RefRadius(); }
 
-inline double HandleGeomConicalSurface_SemiAngle(const Handle_Geom_ConicalSurface &cone) {
-  return cone->SemiAngle();
-}
+inline double HandleGeomConicalSurface_SemiAngle(const Handle_Geom_ConicalSurface &cone) { return cone->SemiAngle(); }
 
 inline const gp_Ax3 &HandleGeomConicalSurface_Position(const Handle_Geom_ConicalSurface &cone) {
   return cone->Position();

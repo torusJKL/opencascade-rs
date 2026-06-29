@@ -32,6 +32,4 @@ inline std::unique_ptr<Handle_Poly_Triangulation> BRep_Tool_Triangulation(const 
       new opencascade::handle<Poly_Triangulation>(BRep_Tool::Triangulation(face, location)));
 }
 
-inline bool BRep_Tool_IsClosed(const TopoDS_Wire &wire) {
-  return BRep_Tool::IsClosed(wire);
-}
+inline bool BRep_Tool_IsClosed(const TopoDS_Wire &wire) { return BRep_Tool::IsClosed(wire); }
